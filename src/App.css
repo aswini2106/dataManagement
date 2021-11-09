@@ -36,3 +36,13 @@
     transform: rotate(360deg);
   }
 }
+
+.table-header {
+  background: white;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.rdt_TableHeadRow{
+  font-weight: bold;
+}
