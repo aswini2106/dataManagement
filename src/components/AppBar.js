@@ -1,4 +1,10 @@
+/**
+ * core packages
+ */
 import * as React from 'react';
+/**
+ * third party packages
+ */
 import { styled, useTheme } from '@material-ui/core/styles/index';
 import Box from '@material-ui/core/Box/index';
 import MuiDrawer from '@material-ui/core/Drawer/index';
@@ -15,11 +21,13 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ListItem from '@material-ui/core/ListItem/index';
 import ListItemIcon from '@material-ui/core/ListItemIcon/index';
 import ListItemText from '@material-ui/core/ListItemText/index';
-import {AccountCircle} from "@material-ui/icons/index";
+import { AccountCircle } from "@material-ui/icons/index";
 import MenuItem from '@material-ui/core/MenuItem/index';
 import Menu from '@material-ui/core/Menu/index';
 import ListAltIcon from '@material-ui/icons/ListAlt';
-
+/**
+ * internal packages
+ */
 import Table from './Table';
 
 const drawerWidth = 240;
@@ -52,7 +60,7 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
         }),
-        marginLeft: open ?`-${214}px`: `-${0}px`,
+        marginLeft: open ? `-${214}px` : `-${0}px`,
         ...(open && {
             transition: theme.transitions.create('margin', {
                 easing: theme.transitions.easing.easeOut,
@@ -107,16 +115,11 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
     }),
 );
 
-export default function MiniDrawer({table}) {
+export default function MiniDrawer({ table }) {
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
-
-
     const [anchorEl, setAnchorEl] = React.useState(null);
-
-
     const isMenuOpen = Boolean(anchorEl);
-
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -147,7 +150,6 @@ export default function MiniDrawer({table}) {
             <MenuItem onClick={handleMenuClose}>My account</MenuItem>
         </Menu>
     );
-
 
     const handleDrawerOpen = () => {
         setOpen(true);
@@ -209,7 +211,7 @@ export default function MiniDrawer({table}) {
                     {['Customer'].map((text, index) => (
                         <ListItem button key={text}>
                             <ListItemIcon>
-                              <ListAltIcon fontSize={"large"} />
+                                <ListAltIcon fontSize={"large"} />
                             </ListItemIcon>
                             <ListItemText primary={text} />
                         </ListItem>
@@ -219,7 +221,7 @@ export default function MiniDrawer({table}) {
             </Drawer>
             <Main open={open}>
                 <DrawerHeader />
-                <Table/>
+                <Table />
             </Main>
         </Box>
 

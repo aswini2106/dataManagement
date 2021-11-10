@@ -1,4 +1,11 @@
-import React, {useState} from "react";
+/**
+ * core packages
+ */
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+/**
+ * third party packages
+ */
 import DataTable from 'react-data-table-component';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/DeleteOutlined';
@@ -10,111 +17,19 @@ import Grid from "@material-ui/core/Grid/index";
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import FileUploadIcon from '@material-ui/icons/CloudUpload';
 import Modal from "@material-ui/core/Modal/index";
-import 'react-dropzone-uploader/dist/styles.css'
 import Typography from "@material-ui/core/Typography";
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Dropzone from 'react-dropzone-uploader';
+import 'react-dropzone-uploader/dist/styles.css'
 import * as XLSX from 'xlsx';
-
-const columns = [
-    {
-        name: 'Date',
-        selector: row => row.year,
-    },
-    {
-        name: 'First Name',
-        sortable: true,
-        selector: row => row.title,
-    },
-    {
-        name: 'Last Name',
-        selector: row => row.title,
-    },
-    {
-        name: 'Email',
-        selector: row => row.title,
-    },
-    {
-        name: 'Actions',
-        selector: row => row.title,
-        cell: row => {
-            return (
-                <div>
-                <IconButton color="primary">
-                <EditIcon fontSize="small" label="Edit" />
-                </IconButton>
-
-                <IconButton>
-                <DeleteIcon fontSize="small" label="Delete" />
-                </IconButton>
-                </div>
-
-            );
-        }
-    },
-];
-
-const data = [
-    {
-        id: 1,
-        title: 'Beetlejuice',
-        year: '1988',
-    },
-    {
-        id: 2,
-        title: 'Ghostbusters',
-        year: '1984',
-    },
-    {
-        id: 3,
-        title: 'Beetlejuice',
-        year: '1988',
-    },
-    {
-        id: 4,
-        title: 'Ghostbusters',
-        year: '1984',
-    },
-    {
-        id: 5,
-        title: 'Beetlejuice',
-        year: '1988',
-    },
-    {
-        id: 6,
-        title: 'Ghostbusters',
-        year: '1984',
-    },
-    {
-        id: 7,
-        title: 'Beetlejuice',
-        year: '1988',
-    },
-    {
-        id: 8,
-        title: 'Ghostbusters',
-        year: '1984',
-    },
-    {
-        id: 9,
-        title: 'Beetlejuice',
-        year: '1988',
-    },
-    {
-        id: 10,
-        title: 'Ghostbusters',
-        year: '1984',
-    },
-    {
-        id: 11,
-        title: 'Beetlejuice',
-        year: '1988',
-    },
-    {
-        id: 12,
-        title: 'Ghostbusters',
-        year: '1984',
-    },
-]
+/**
+ * internal packages
+ */
+import {
+    failure,
+    success,
+    selectMsg
+} from '../redux/notification';
 
 const style = {
     position: 'absolute',
@@ -131,29 +46,34 @@ const style = {
     pb: 3,
 };
 
+const progressComponent = (
+    <CircularProgress />
+);
+
 export default function Table() {
     const [open, setOpen] = React.useState(false);
-
-
+    const [isLoading, setIsLoading] = React.useState(false);
     const [columns, setColumns] = useState([]);
     const [data, setData] = useState([]);
+    const message = useSelector(selectMsg);
+    const dispatch = useDispatch();
 
-    // process CSV data
-    const processData = dataString => {
-        const dataStringLines = dataString.split(/\r\n|\n/);
-        const headers = dataStringLines[0].split(/,(?![^"]*"(?:(?:[^"]*"){2})*[^"]*$)/);
+    // read CSV data
+    const readCSV = data => {
+        const lines = data.split(/\r\n|\n/);
+        const headers = lines[0].split(/,(?![^"]*"(?:(?:[^"]*"){2})*[^"]*$)/);
 
         const list = [];
-        for (let i = 1; i < dataStringLines.length; i++) {
-            const row = dataStringLines[i].split(/,(?![^"]*"(?:(?:[^"]*"){2})*[^"]*$)/);
-            if (headers && row.length == headers.length) {
+        for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].split(/,(?![^"]*"(?:(?:[^"]*"){2})*[^"]*$)/);
+            if (headers && row.length === headers.length) {
                 const obj = {};
                 for (let j = 0; j < headers.length; j++) {
                     let d = row[j];
                     if (d.length > 0) {
-                        if (d[0] == '"')
+                        if (d[0] === '"')
                             d = d.substring(1, d.length - 1);
-                        if (d[d.length - 1] == '"')
+                        if (d[d.length - 1] === '"')
                             d = d.substring(d.length - 2, 1);
                     }
                     if (headers[j]) {
@@ -161,21 +81,22 @@ export default function Table() {
                     }
                 }
 
-                // remove the blank rows
+                // remove any blank rows
                 if (Object.values(obj).filter(x => x).length > 0) {
                     list.push(obj);
                 }
             }
         }
 
-        // prepare columns list from headers
-        let columnsE = headers.map(c => ({
+        // get columns dynamically from headers
+        let columns = headers.map(c => ({
             name: c,
             sortable: true,
             selector: c,
         }));
 
-        columnsE.push({
+        //inject Action columns
+        columns.push({
             name: 'Actions',
             selector: row => row.title,
             cell: row => {
@@ -195,11 +116,9 @@ export default function Table() {
         })
 
         setData(list);
-        setColumns(columnsE);
+        setColumns(columns);
+        setIsLoading(false);
     }
-
-
-
 
     const handleOpen = () => {
         setOpen(true);
@@ -208,6 +127,7 @@ export default function Table() {
         setOpen(false);
     };
 
+    // Reference from : https://react-dropzone-uploader.js.org/
     // specify upload params and url for your files
     const getUploadParams = ({ meta }) => { return { url: 'https://httpbin.org/post' } }
 
@@ -216,29 +136,41 @@ export default function Table() {
 
     // receives array of files that are done uploading when submit button is clicked
     const handleSubmit = (files, allFiles) => {
+        setData([]);
+        setIsLoading(true);
         handleClose();
-        console.log(files.map(f => f.meta))
-       // allFiles.forEach(f => f.remove())
         handleFileUpload(allFiles);
     }
 
     // handle file upload
-    const handleFileUpload = (files) => {
-        debugger
-        const file = files[0].file;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            /* Parse data */
-            const bstr = evt.target.result;
-            const wb = XLSX.read(bstr, { type: 'binary' });
-            /* Get first worksheet */
-            const wsname = wb.SheetNames[0];
-            const ws = wb.Sheets[wsname];
-            /* Convert array of arrays */
-            const data = XLSX.utils.sheet_to_csv(ws, { header: 1 });
-            processData(data);
-        };
-        reader.readAsText(file);
+    const handleFileUpload = async (files) => {
+        try {
+            await dispatch(success('success'));
+            const file = files[0].file;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    /* Parse data */
+                    const bstr = evt.target.result;
+                    const wb = XLSX.read(bstr, { type: 'binary' });
+                    /* Get first worksheet */
+                    const wsname = wb.SheetNames[0];
+                    const ws = wb.Sheets[wsname];
+                    /* Convert array of arrays */
+                    const data = XLSX.utils.sheet_to_csv(ws, { header: 1 });
+                    readCSV(data);
+                }
+                catch (e) {
+                    dispatch(failure('failure'));
+                    setIsLoading(false);
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+        catch (e) {
+            dispatch(failure('failure'));
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -246,31 +178,31 @@ export default function Table() {
             <header className="table-header">
                 <Grid container spacing={2}>
                     <Grid item xs={6}>
-            <Button color="primary" variant="contained" endIcon={<FileUploadIcon/>} onClick={handleOpen}>Upload Data</Button>
+                        <Button color="primary" variant="contained" endIcon={<FileUploadIcon />} onClick={handleOpen}>Upload Data</Button>
+                        <Typography variant="h7" style={{ fontStyle: 'italic', margin: 3 }}> {message}</Typography>
                     </Grid>
                     <Grid item xs={6} container justify="flex-end">
-
-                    <Grid item xs={3} style={{flexBasis:'15%'}}>
-            <Button color="primary" variant="outlined"  startIcon={<AddCircleOutlineIcon/>}  >Add</Button>
-                    </Grid>
-                        <Grid item xs={3} style={{flexBasis:'12%'}}>
+                        <Grid item xs={3} style={{ flexBasis: '15%' }}>
+                            <Button color="primary" variant="outlined" startIcon={<AddCircleOutlineIcon />}  >Add</Button>
+                        </Grid>
+                        <Grid item xs={3} style={{ flexBasis: '12%' }}>
                             <Button color="primary" variant="outlined" startIcon={<DeleteIcon />} >Delete</Button>
                         </Grid>
                     </Grid>
                 </Grid>
             </header>
-        <DataTable
-            columns={columns}
-            data={data}
-            selectableRows
-            pagination={data.length > 10}
-            paginationTotalRows={data.length}
-            paginationPerPage={10}
-            defaultSortField='title'
-            dense
-            paginationRowsPerPageOptions={[10, 15, 20, 25, 30, 50, 100]}
-
-        />
+            <DataTable
+                columns={columns}
+                data={data}
+                selectableRows
+                pagination={data.length > 10}
+                paginationTotalRows={data.length}
+                paginationPerPage={10}
+                dense
+                paginationRowsPerPageOptions={[10, 15, 20, 25, 30, 50, 100]}
+                progressPending={isLoading}
+                progressComponent={progressComponent}
+            />
             <Modal
                 hideBackdrop
                 open={open}
@@ -280,17 +212,15 @@ export default function Table() {
             >
                 <Box sx={{ ...style }}>
                     <header>
-                    <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                        <Typography variant="h6" id="parent-modal-title">Upload data</Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                                <Typography variant="h6" id="parent-modal-title">Upload data</Typography>
+                            </Grid>
+                            <Grid item xs={6} container justify="flex-end">
+                                <Button variant="outlined" startIcon={<CloseIcon />} onClick={handleClose}>Cancel</Button>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={6} container justify="flex-end">
-                        <Button variant="outlined" startIcon={<CloseIcon />} onClick={handleClose}>Cancel</Button>
-                        </Grid>
-                    </Grid>
                     </header>
-
-
                     <Typography variant="body2" id="parent-modal-title">Only upload xlsx/xls, csv files and not more than 500 kb</Typography>
                     <p id="parent-modal-description">
                         <Dropzone
@@ -301,7 +231,6 @@ export default function Table() {
                             styles={{ dropzone: { minHeight: 350, maxHeight: 350 } }}
                         />
                     </p>
-
                 </Box>
             </Modal>
         </>
