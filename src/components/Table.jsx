@@ -143,9 +143,9 @@ export default function Table() {
     }
 
     // handle file upload
-    const handleFileUpload = async (files) => {
+    const handleFileUpload = (files) => {
         try {
-            await dispatch(success('success'));
+            dispatch(success('success'));
             files && files.map(file =>{
             const reader = new FileReader();
             reader.onload = (evt) => {
