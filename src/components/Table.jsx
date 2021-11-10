@@ -146,7 +146,7 @@ export default function Table() {
     const handleFileUpload = async (files) => {
         try {
             await dispatch(success('success'));
-            const file = files[0].file;
+            files && files.map(file =>{
             const reader = new FileReader();
             reader.onload = (evt) => {
                 try {
@@ -165,7 +165,8 @@ export default function Table() {
                     setIsLoading(false);
                 }
             };
-            reader.readAsText(file, 'UTF-8');
+            reader.readAsText(file.file, 'UTF-8');
+            })
         }
         catch (e) {
             dispatch(failure('failure'));
